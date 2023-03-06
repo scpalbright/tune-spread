@@ -9,7 +9,9 @@ import matplotlib
 
 s = PySCRDT()
 
-if input_parameters.bunchLength_ns:
+keys=dir(input_parameters)
+
+if 'bunchLength_ns' in keys:
     bunchLength=(input_parameters.bunchLength_ns/4.)*0.3
 else:
     bunchLength = input_parameters.bunchLength_m
@@ -25,7 +27,17 @@ s.setParameters(
 
 s.prepareData(twissFile=input_parameters.twiss_file)
 
-if input_parameters.bunchLength_ns:
+if ('b' in keys) and ('g' in keys):
+    s.updateParameters(b=input_parameters.b)
+    s.updateParameters(g=input_parameters.g)
+elif 'g' in keys:
+    s.updateParameters(g=input_parameters.g)
+    s.updateParameters(b=np.sqrt(1-1/input_parameters.g**2))
+elif 'b' in keys:
+    s.updateParameters(b=input_parameters.b)
+    s.updateParameters(g=1/np.sqrt(1-input_parameters.b**2))
+
+if 'bunchLength_ns' in keys:
     s.updateParameters(bunchLength=bunchLength*s.parameters['b'])
 # caclulate detuning coefficients using potentials up to 20th order (needed for up to 3 sigma particles)
 

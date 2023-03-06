@@ -13,3 +13,5 @@ plot_order  =   4   # order of resonances to plot
 periodicity =   16  # periodicity of ring for the colorcode of the plot
 figure		=	'figure.png'
 twiss_file  =   'twiss_files/twiss_PSB'
+#b  =   # relativistic beta  :  if desired energy different than in twiss file
+#g  =   # relativistic gamma :  if desired energy different than in twiss file
