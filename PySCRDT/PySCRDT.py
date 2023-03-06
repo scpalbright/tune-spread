@@ -332,7 +332,7 @@ class PySCRDT(object):
         
     # - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - *
 
-    def prepareData(self,twissFile, skip_header_nr=45, skip_rows_nr=47): 
+    def prepareData(self,twissFile): 
         """
         Prepares the data from a MADX Twiss file including at least {s, betx, bety, dx, dy, mux, muy, l}
         Inputs : twissFile : [str] twiss file (default=None)
@@ -342,6 +342,13 @@ class PySCRDT(object):
             raise IOError('# PySCRDT::prepareData: You need to define Madx twiss file in [prepareData]')
         if self.parameters is None:
             raise IOError('# PySCRDT::prepareData: You need to define parameters in [setParameters]')
+        with open(twissFile, 'r') as f:
+            for line in enumerate(f.readlines()):
+                if line[1][0]=='*':
+                    skip_header_nr = line[0]
+                elif line[1][0]=='$':
+                    skip_rows_nr = line[0]+1
+                    break
         params=np.genfromtxt(twissFile,max_rows=40,dtype=str)
         for i in enumerate(params):
             if params[i[0]][1]=='GAMMA':
@@ -356,14 +363,7 @@ class PySCRDT(object):
         header=np.genfromtxt(twissFile,skip_header=skip_header_nr,max_rows=1,dtype=str)   # 45 originally, below 47
         data=np.loadtxt(twissFile,skiprows=skip_rows_nr,usecols=(np.where(header=='S')[0][0]-1,np.where(header=='BETX')[0][0]-1,np.where(header=='BETY')[0][0]-1,np.where(header=='DX')[0][0]-1,np.where(header=='DY')[0][0]-1,np.where(header=='MUX')[0][0]-1,np.where(header=='MUY')[0][0]-1,np.where(header=='L')[0][0]-1))
         s = np.linspace(0,self.parameters['C'],100000)
-        try:
-            data=np.loadtxt(twissFile,skiprows=47,usecols=(np.where(header=='S')[0][0]-1,np.where(header=='BETX')[0][0]-1,np.where(header=='BETY')[0][0]-1,np.where(header=='DX')[0][0]-1,np.where(header=='DY')[0][0]-1,np.where(header=='MUX')[0][0]-1,np.where(header=='MUY')[0][0]-1,np.where(header=='L')[0][0]-1,np.where(header=='ALFX')[0][0]-1,np.where(header=='ALFY')[0][0]-1))
-            data2=np.zeros((100000,10))
-            data2[:,8] = np.interp(s,data[:,0],data[:,8])
-            data2[:,9] = np.interp(s,data[:,0],data[:,9])
-        except:
-            data=np.loadtxt(twissFile,skiprows=47,usecols=(np.where(header=='S')[0][0]-1,np.where(header=='BETX')[0][0]-1,np.where(header=='BETY')[0][0]-1,np.where(header=='DX')[0][0]-1,np.where(header=='DY')[0][0]-1,np.where(header=='MUX')[0][0]-1,np.where(header=='MUY')[0][0]-1,np.where(header=='L')[0][0]-1))
-            data2=np.zeros((100000,8))
+        data2=np.zeros((100000,8))
         data2[:,1] = np.square(np.interp(s,data[:,0],np.sqrt(data[:,1])))
         data2[:,2] = np.square(np.interp(s,data[:,0],np.sqrt(data[:,2])))
         data2[:,3] = np.interp(s,data[:,0],self.parameters['b']*data[:,3])
