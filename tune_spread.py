@@ -13,16 +13,24 @@ keys=dir(input_parameters)
 
 if 'bunchLength_ns' in keys:
     bunchLength=(input_parameters.bunchLength_ns/4.)*0.3
-else:
+elif 'bunchLength_m' in keys:
     bunchLength = input_parameters.bunchLength_m
-    
+else:
+    bunchLength = None
+
+if 'bF' in keys:
+    bF=input_parameters.bF
+else:
+    bF = None
+
+
 s.setParameters(
     intensity=input_parameters.intensity,
     bunchLength=bunchLength,
     emittance_x=input_parameters.emittance_x,
     emittance_y=input_parameters.emittance_y, 
     dpp_rms=input_parameters.dpp_rms,  
-    bF=input_parameters.bF
+    bF=bF
 )
 
 s.prepareData(twissFile=input_parameters.twiss_file)
@@ -39,6 +47,9 @@ elif 'b' in keys:
 
 if 'bunchLength_ns' in keys:
     s.updateParameters(bunchLength=bunchLength*s.parameters['b'])
+
+if 'ro' in keys:
+    s.updateParameters(ro=input_parameters.ro)
 # caclulate detuning coefficients using potentials up to 20th order (needed for up to 3 sigma particles)
 
 detuning=[]
