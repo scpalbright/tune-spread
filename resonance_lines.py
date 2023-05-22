@@ -66,7 +66,7 @@ class resonance_lines(object):
 					line, = plt.plot([Qx_min, Qx_max], \
 					    [(res_sum-nx*Qx_min)/ny, (res_sum-nx*Qx_max)/ny])
 				else:
-					line, = plt.plot([np.float(res_sum)/nx, np.float(res_sum)/nx],[Qy_min, Qy_max])
+					line, = plt.plot([float(res_sum)/nx, float(res_sum)/nx],[Qy_min, Qy_max])
 				if ny%2:
 					plt.setp(line, linestyle='--', zorder=1) # for skew resonances
 				if res_sum%self.periodicity:
