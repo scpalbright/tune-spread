@@ -251,22 +251,25 @@ class PySCRDT(object):
         if self.n%2!=0:
             raise IOError('# PySCRDT::potential: Space charge potential contains only even orders (order given {}), change the order in [setOrder]'.format(str(self.n)))
         if (self.m+self.n < 21) and (feedDown==False) and (lookUp==True):
-            try:
-                with open(__file__[:__file__.find('PySCRDT.py')]+'potentialsPy3','rb') as f:                                    
-                    a=dill.load(f)
-                a=np.array(a)
-                a=a[np.where(a[:,0]==self.m)[0]]
-                self.f=a[np.where(a[:,1]==self.n)][0][2]
-            except:
+            if (self.m==32 and self.n==8) or (self.m==8 and self.n==32):
+                pass
+            else:
                 try:
-                    with open(__file__[:__file__.find('PySCRDT.py')]+'potentialsPy2','rb') as f:                                    
+                    with open(__file__[:__file__.find('PySCRDT.py')]+'potentialsPy3','rb') as f:                                    
                         a=dill.load(f)
                     a=np.array(a)
                     a=a[np.where(a[:,0]==self.m)[0]]
                     self.f=a[np.where(a[:,1]==self.n)][0][2]
                 except:
-                    lookUp=False     
-                    print('# PySCRDT::potential: Calculating potential')  
+                    try:
+                        with open(__file__[:__file__.find('PySCRDT.py')]+'potentialsPy2','rb') as f:                                    
+                            a=dill.load(f)
+                        a=np.array(a)
+                        a=a[np.where(a[:,0]==self.m)[0]]
+                        self.f=a[np.where(a[:,1]==self.n)][0][2]
+                    except:
+                        lookUp=False     
+                        print('# PySCRDT::potential: Calculating potential')  
         if (self.m+self.n > 21) or (feedDown==True) or (lookUp==False):
             V = (-1+sy.exp(-self.x**2/(self.t+2*self.a**2)-self.y**2/(self.t+2*self.b**2)))/sy.sqrt((self.t+2*self.a**2)*(self.t+2*self.b**2))
             if self.m>self.n:
@@ -422,10 +425,10 @@ class PySCRDT(object):
         """
         self.dictionary={}
         for i in factor.keys():
-            if len(i.args)==0:
-                self.dictionary[i]=factor[i]
-            else:
-                self.dictionary[sy.exp(i.args[0]/1.)]=factor[i]
+            #if len(i.args)==0:
+            self.dictionary[i]=factor[i]
+            #else:
+            #    self.dictionary[sy.exp(i.args[0]/1.)]=factor[i]
         return self.dictionary
     # - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - *
 
@@ -462,24 +465,24 @@ class PySCRDT(object):
                 det2=sy.expand(det3)
                 factor=sy.collect(det2,sy.exp(1j*self.fy),evaluate=False)
                 dictionary=self.reIndexing(factor)
-                self.factor=float(2.*dictionary[sy.exp(abs(self.n)*1j*self.fy)])
+                self.factor=float(2.*dictionary[sy.exp(1j*self.fy)**float(abs(self.n))])
             elif self.n==0:
                 det1=sy.cos(self.fx)**abs(self.m)
                 det3=det1.rewrite(sy.exp)
                 det2=sy.expand(det3)
                 factor=sy.collect(det2,sy.exp(1j*self.fx),evaluate=False)
                 dictionary=self.reIndexing(factor)
-                self.factor=float(2.*dictionary[sy.exp(abs(self.m)*1j*self.fx)])
+                self.factor=float(2.*dictionary[sy.exp(1j*self.fx)**float(abs(self.m))])
             else:
                 det1=(sy.cos(self.fx)**abs(self.m)*sy.cos(self.fy)**abs(self.n))
                 det3=det1.rewrite(sy.exp)
                 det2=sy.expand(det3)
                 factor1=sy.collect(det2,sy.exp(1j*self.fx),evaluate=False)
                 dictionary=self.reIndexing(factor1)
-                factor1=dictionary[sy.exp(abs(self.m)*1j*self.fx)]
+                factor1=dictionary[sy.exp(1j*self.fx)**float(abs(self.m))]
                 factor2=sy.collect(factor1,sy.exp(1j*self.fy),evaluate=False)
                 dictionary=self.reIndexing(factor2)
-                self.factor=float(2.*dictionary[sy.exp(abs(self.n)*1j*self.fy)])
+                self.factor=float(2.*dictionary[sy.exp(1j*self.fy)**float(abs(self.n))])
             return self.factor
     
     # - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - *
