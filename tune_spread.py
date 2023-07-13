@@ -50,6 +50,8 @@ if 'bunchLength_ns' in keys:
 
 if 'ro' in keys:
     s.updateParameters(ro=input_parameters.ro)
+if 'harmonic' in keys:
+    s.updateParameters(harmonic=input_parameters.harmonic)
 # caclulate detuning coefficients using potentials up to 20th order (needed for up to 3 sigma particles)
 
 detuning=[]
@@ -84,7 +86,6 @@ S = initial_xy_polar(s_max=s_max, s_N=s_N, theta_N=theta_N)
 
 #  estimate tunes from the detuning coefficients
 
-
 en_x=s.parameters['emittance_x']
 en_y=s.parameters['emittance_y']
 beta=s.parameters['b']
@@ -110,12 +111,12 @@ Q = np.dstack(
 Q[:,:,0] += 0.00
 Q[:,:,1] += 0.00
 
-sx = Q.shape[0]-1
-sy = Q.shape[1]-1
-p1 = Q[:-1, :-1, :].reshape(sx*sy, 2)[:, :]
-p2 = Q[1:, :-1, :].reshape(sx*sy, 2)[:]
-p3 = Q[1:, 1:, :].reshape(sx*sy, 2)[:]
-p4 = Q[:-1, 1:, :].reshape(sx*sy, 2)[:]
+sigma_x = Q.shape[0]-1
+sigma_y = Q.shape[1]-1
+p1 = Q[:-1, :-1, :].reshape(sigma_x*sigma_y, 2)[:, :]
+p2 = Q[1:, :-1, :].reshape(sigma_x*sigma_y, 2)[:]
+p3 = Q[1:, 1:, :].reshape(sigma_x*sigma_y, 2)[:]
+p4 = Q[:-1, 1:, :].reshape(sigma_x*sigma_y, 2)[:]
 
 
 # do the plotting
