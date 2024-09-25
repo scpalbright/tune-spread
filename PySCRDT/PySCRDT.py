@@ -778,7 +778,8 @@ class PySCRDT(object):
         """
 
         if self.parameters is None:
-            raise IOError('# PySCRDT::getParameters: You need to define parameters in [setParameters]|[readParameters]')
+            raise IOError("# PySCRDT::getParameters: You need to define"
+                          + "parameters in [setParameters]|[readParameters]")
         else:
             return self.parameters
 
@@ -790,7 +791,8 @@ class PySCRDT(object):
         """
 
         if self.data is None:
-            raise IOError('# PySCRDT::getWorkingPoint: You need to define Madx twiss file in [prepareData]')
+            raise IOError("# PySCRDT::getWorkingPoint: You need to define Madx"
+                          + "twiss file in [prepareData]")
         else:
             return self.actualQx, self.actualQy
 
@@ -802,17 +804,20 @@ class PySCRDT(object):
         """
 
         if self.mode is None:
-            raise IOError('# PySCRDT::getOrder: You need to define resonance mode description in [setMode]')
+            raise IOError("# PySCRDT::getOrder: You need to define resonance "
+                          + "mode description in [setMode]")
 
         elif self.mode==3:
             if self.m is None:
-                raise IOError('# PySCRDT::getOrder: You need to define the order in [setOrder]')
+                raise IOError("# PySCRDT::getOrder: You need to define the "
+                              + "order in [setOrder]")
             else:
                 return self.m, self.n, self.l
 
         elif self.mode==5:
             if self.h is None:
-                raise IOError('# PySCRDT::getOrder: You need to define the order in [setOrder]')
+                raise IOError("# PySCRDT::getOrder: You need to define the "
+                              + "order in [setOrder]")
             else:
                 return self.h, self.i, self.j, self.k, self.l
 
@@ -824,7 +829,8 @@ class PySCRDT(object):
         """
 
         if self.mode is None:
-            raise IOError('# PySCRDT::getMode: You need to define resonance mode description in [setMode]')
+            raise IOError("# PySCRDT::getMode: You need to define resonance "
+                          + "mode description in [setMode]")
         else:
             return self.mode
 
