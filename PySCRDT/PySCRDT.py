@@ -13,18 +13,10 @@
 # - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - * - - *
 
 from __future__ import absolute_import, division, print_function, unicode_literals
-try:
-    import numpy as np
-except ImportError:
-    print("# PySCRDT : numpy module is required. ")
-try:
-    import sympy as sy
-except ImportError:
-    print("# PySCRDT : sympy module is required. ")
-try:
-    import dill
-except ImportError:
-    print("# PySCRDT : dill module is required. ")
+
+import numpy as np
+import sympy as sy
+import dill
 
 
 __version   = 1.1
