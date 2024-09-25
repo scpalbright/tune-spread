@@ -18,6 +18,7 @@ REQUIREMENTS: dict = {
     'core': [
         "numpy",
         "sympy",
+        "dill"
     ],
     'test': [
     ],
