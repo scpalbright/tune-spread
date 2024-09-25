@@ -12,7 +12,7 @@
 """
 
 from __future__ import (absolute_import, division, print_function,
-                        unicode_literals)
+                        unicode_literals, annotations)
 
 import numpy as np
 import sympy as sy
