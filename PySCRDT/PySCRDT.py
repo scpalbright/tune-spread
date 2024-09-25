@@ -852,10 +852,12 @@ class PySCRDT(object):
         return self.V
 
 
-    def getResonanceDrivingTerms(self, feedDown: bool = False) -> dict:
+    def getResonanceDrivingTerms(self, feedDown: Optional[bool] = False) -> dict:
         """
         Returns the RDTs
-        Inputs : feedDown : [bool] needed only if [resonanceDrivingTerms] has not been already used (default=False)
+        Inputs : feedDown : [bool] needed only if [resonanceDrivingTerms]
+                            has not been already used
+                            (default=False)
         Returns: [dict] the resonance driving terms
         """
 
