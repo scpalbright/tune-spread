@@ -1,0 +1,20 @@
+# Runtime artefacts.
+__pycache__
+*.py[co]
+*.egg-info
+*.pkg-info
+
+# Common virtual env names
+venv/
+venv.*/
+
+# Build artefacts
+*.whl
+dist/
+build/
+
+# Common IDE files
+.idea/
+.vscode/
+.spyproject/
+
