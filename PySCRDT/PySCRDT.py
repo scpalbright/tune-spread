@@ -627,10 +627,12 @@ class PySCRDT(object):
             else:
                 det1 = (sy.cos(self.fx)**abs(self.m)
                         *sy.cos(self.fy)**abs(self.n))
-                det3=det1.rewrite(sy.exp)
-                det2=sy.expand(det3)
-                factor1=sy.collect(det2, sy.exp(1j*self.fx), evaluate=False)[1]
-                self.factor_d=float(sy.collect(factor1, sy.exp(1j*self.fy),
+                
+                det3 = det1.rewrite(sy.exp)
+                det2 = sy.expand(det3)
+                factor1 = sy.collect(det2, sy.exp(1j*self.fx),
+                                     evaluate=False)[1]
+                self.factor_d = float(sy.collect(factor1, sy.exp(1j*self.fy),
                                                evaluate=False)[1])
 
             return self.factor_d
