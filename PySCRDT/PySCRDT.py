@@ -18,6 +18,11 @@ import numpy as np
 import sympy as sy
 import dill
 
+from icecream import ic
+import inspect
+import sys
+import time
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -313,39 +318,44 @@ class PySCRDT(object):
             raise IOError("# PySCRDT::potential: You need to define "
                           + "resonance order in [set_order]")
 
-        if self.m%2!=0 and (feed_down==False):
+        if self.m%2 != 0 and (feed_down == False):
             raise IOError("# PySCRDT::potential: Space charge potential"
                           + " contains only even orders without Dp/p (order "
                           + f"given {self.m}), change the order in [set_order]")
 
-        if self.n%2!=0:
+        if self.n%2 != 0:
             raise IOError("# PySCRDT::potential: Space charge potential "
                           + f"contains only even orders (order given {self.m})"
                           + ", change the order in [set_order]")
 
-        if (self.m+self.n < 21) and (feed_down==False) and (look_up==True):
-            if (self.m==32 and self.n==8) or (self.m==8 and self.n==32):
+        if (self.m+self.n < 21) and (feed_down == False) and (look_up == True):
+            if (self.m == 32 and self.n == 8) or (self.m == 8 and self.n == 32):
                 pass
             else:
                 try:
                     with open(__file__[:__file__.find('PySCRDT.py')]
                               +'potentialsPy3','rb') as f:
-                        a=dill.load(f)
-                    a=np.array(a)
-                    a=a[np.where(a[:,0]==self.m)[0]]
-                    self.f=a[np.where(a[:,1]==self.n)][0][2]
+                        a = dill.load(f)
+
+                    a = np.array(a)
+                    a = a[np.where(a[:,0] == self.m)[0]]
+
+                    self.f = a[np.where(a[:,1] == self.n)][0][2]
+
                 except:
                     try:
                         with open(__file__[:__file__.find('PySCRDT.py')] +
                                   'potentialsPy2','rb') as f:
-                            a=dill.load(f)
-                        a=np.array(a)
-                        a=a[np.where(a[:,0]==self.m)[0]]
-                        self.f=a[np.where(a[:,1]==self.n)][0][2]
+                            a = dill.load(f)
+                        a = np.array(a)
+                        a = a[np.where(a[:,0] == self.m)[0]]
+                        self.f = a[np.where(a[:,1] == self.n)][0][2]
+
                     except:
-                        look_up=False
+                        look_up = False
                         print('# PySCRDT::potential: Calculating potential')
 
+        # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
             V = ((-1 + sy.exp(-self.x**2 / (self.t + 2*self.a**2)
                               -self.y**2 / (self.t + 2*self.b**2)))
@@ -390,8 +400,7 @@ class PySCRDT(object):
             res = sy.integrate(sterm, (self.t, 0, sy.oo)).doit()
             result = res.doit()
             self.V = sy.simplify(result)
-            self.f = sy.lambdify((self.a,self.b,self.D),self.V)
-
+            self.f = sy.lambdify((self.a, self.b, self.D), self.V)
 
     def ksc(self):
         """
