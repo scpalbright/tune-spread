@@ -48,6 +48,9 @@ class SCParameters:
     dpp: float = 0
     bF: Optional[float] = None
     harmonic: int = 1
+    b: Optional[float] = None
+    g: Optional[float] = None
+    C: Optional[float] = None
 
 
 class PySCRDT(object):
@@ -433,8 +436,8 @@ class PySCRDT(object):
 
         else:
             self.K = (2*params.intensity*params.ro
-                      /(np.sqrt(2*np.pi)*params.bunch_length
-                        *params.b**2 * params.g**3))
+                      /(np.sqrt(2*np.pi)*params.bunch_ength
+                        * params.b**2 * params.g**3))
 
 
     def beam_size(self):
@@ -451,12 +454,14 @@ class PySCRDT(object):
             raise IOError("# PySCRDT::ksc: You need to define Madx "
                           + "twiss file in [prepare_data]")
 
-        self.sx = np.sqrt(self.parameters['emittance_x']*self.data[:,1]
-                          /(self.parameters['b']*self.parameters['g'])
-                          +(self.parameters['dpp_rms']*self.data[:,3])**2)
-        self.sy = np.sqrt(self.parameters['emittance_y']*self.data[:,2]
-                          /(self.parameters['b']*self.parameters['g'])
-                          +(self.parameters['dpp_rms']*self.data[:,4])**2)
+        params = self._parameters
+
+        self.sx = np.sqrt(params.emittance_x*self.data[:,1]
+                          /(params.b*params.g)
+                          +(params.dpp_rms*self.data[:,3])**2)
+        self.sy = np.sqrt(params.emittance_y*self.data[:,2]
+                          /(params.b*params.g)
+                          +(params.dpp_rms*self.data[:,4])**2)
 
 
     def prepare_data(self, twiss_file: Optional[str] = None):
@@ -485,11 +490,11 @@ class PySCRDT(object):
 
         for i in enumerate(params):
             if params[i[0]][1] == 'GAMMA':
-                self.parameters['g'] = float(params[i[0]][3])
-                self.parameters['b'] = np.sqrt(1 - 1/self.parameters['g']**2)
+                self._parameters.g = float(params[i[0]][3])
+                self._parameters.b = np.sqrt(1 - 1/self._parameters.g**2)
 
             elif params[i[0]][1] == 'LENGTH':
-                self.parameters['C'] = float(params[i[0]][3])
+                self._parameters.C = float(params[i[0]][3])
 
             elif params[i[0]][1] == 'Q1':
                 self.actualQx = float(params[i[0]][3])
@@ -511,19 +516,20 @@ class PySCRDT(object):
                                      np.where(header == 'MUY')[0][0] - 1,
                                      np.where(header == 'L')[0][0] - 1))
 
-        s = np.linspace(0, self.parameters['C'], 100000)
+        s = np.linspace(0, self._parameters.C, 100000)
 
         data2 = np.zeros((100000, 8))
 
         data2[:,1] = np.square(np.interp(s, data[:,0], np.sqrt(data[:,1])))
         data2[:,2] = np.square(np.interp(s, data[:,0], np.sqrt(data[:,2])))
-        data2[:,3] = np.interp(s,data[:,0], self.parameters['b']*data[:,3])
-        data2[:,4] = np.interp(s,data[:,0], self.parameters['b']*data[:,4])
+        data2[:,3] = np.interp(s,data[:,0], self._parameters.b*data[:,3])
+        data2[:,4] = np.interp(s,data[:,0], self._parameters.b*data[:,4])
         data2[:,5] = np.interp(s,data[:,0], data[:,5])
         data2[:,6] = np.interp(s,data[:,0], data[:,6])
-        data2[:,7] += self.parameters['C']/len(s)
+        data2[:,7] += self._parameters.C/len(s)
         data2[:,0] = s
         self.data = data2
+
         self.beam_size()
         self.ksc()
 
@@ -548,15 +554,15 @@ class PySCRDT(object):
                           + "define parameters in [set_parameters]")
 
         # Define parameters from Twiss table
-        self.parameters['g'] = twiss_table_xsuite['particle_on_co'].gamma0[0]
-        self.parameters['b'] = twiss_table_xsuite['particle_on_co'].beta0[0]
-        self.parameters['C'] = twiss_table_xsuite['circumference']
+        self._parameters.g = twiss_table_xsuite['particle_on_co'].gamma0[0]
+        self._parameters.b = twiss_table_xsuite['particle_on_co'].beta0[0]
+        self._parameters.C = twiss_table_xsuite['circumference']
         self.actualQx = twiss_table_xsuite['qx']
         self.actualQy = twiss_table_xsuite['qy']
 
         # Set up data for increased resolution by interpolation
         #columns = ['s', 'betx', 'bety', 'dx', 'dy', 'mux', 'muy', 'l']
-        s = np.linspace(0, self.parameters['C'], 100000)
+        s = np.linspace(0, self._parameters.C, 100000)
 
         data2 = np.zeros((100000, 8))
 
@@ -565,14 +571,14 @@ class PySCRDT(object):
         data2[:,2] = np.square(np.interp(s, twiss_table_xsuite['s'],
                                          np.sqrt(twiss_table_xsuite['bety'])))
         data2[:,3] = np.interp(s, twiss_table_xsuite['s'],
-                               self.parameters['b']*twiss_table_xsuite['dx'])
+                               self._parameters.b*twiss_table_xsuite['dx'])
         data2[:,4] = np.interp(s, twiss_table_xsuite['s'],
-                               self.parameters['b']*twiss_table_xsuite['dy'])
+                               self._parameters.b*twiss_table_xsuite['dy'])
         data2[:,5] = np.interp(s, twiss_table_xsuite['s'],
                                twiss_table_xsuite['mux'])
         data2[:,6] = np.interp(s, twiss_table_xsuite['s'],
                                twiss_table_xsuite['muy'])
-        data2[:,7] += self.parameters['C']/len(s)
+        data2[:,7] += self._parameters.C/len(s)
         data2[:,0] = s
 
         self.data=data2
