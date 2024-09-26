@@ -14,6 +14,7 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals, annotations)
 
+import dataclasses as dc
 import numpy as np
 import sympy as sy
 import dill
@@ -26,7 +27,7 @@ import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Literal, Optional, List, Tuple
+    from typing import Literal, Optional, List, Tuple, Dict
     from sympy import Expr
 
 
@@ -34,6 +35,20 @@ __version   = 1.1
 __PyVersion = ["2.7"]
 __author    = ["Foteini Asvesta"]
 __contact   = ["fasvesta .at. cern .dot. ch"]
+
+@dc.dataclass
+class SCParameters:
+
+    intensity: float = 41E10
+    bunch_length: float = 5.96
+    ro: float = 1.5347e-18
+    emittance_x: float = 2E-6
+    emittance_y: float = 1.1E-6
+    dpp_rms: float = 0.5E-3
+    dpp: float = 0
+    bF: Optional[float] = None
+    harmonic: int = 1
+
 
 class PySCRDT(object):
     """
@@ -73,16 +88,16 @@ class PySCRDT(object):
         self.fx = sy.Symbol('fx', positive=True, real=True)
         self.fy = sy.Symbol('fy', positive=True, real=True)
 
-        self.V=None
-        self.K=None
-        self.data=None
-        self.factor=None
-        self.factor_d=None
-        self.rdt=None
-        self.rdt_d=None
-        self.feed=False
-        self.mode=None
-        self.order=None
+        self.V = None
+        self.K = None
+        self.data = None
+        self.factor = None
+        self.factor_d = None
+        self.rdt = None
+        self.rdt_d = None
+        self.feed = False
+        self._mode = None
+        self._order = None
 
         if type(parameters) is str:
             self.parameters=None
@@ -119,21 +134,66 @@ class PySCRDT(object):
                 self.set_mode(mode)
             self.set_order(order)
 
+    @property
+    def mode(self) -> int:
+        return self._mode
 
-    def set_mode(self, mode):
+    @mode.setter
+    def mode(self, value: Optional[Literal[3] | Literal[5]]):
+        if value not in (3, 5):
+            raise ValueError("# PySCRDT::set_mode: Mode needs to be 3 or 5 "
+                          + "depending on the desired resonance description")
+        else:
+            self._mode = value
+
+
+    def set_mode(self, mode: Optional[Literal[3] | Literal[5]] = None):
         """
         Sets the mode for the characterization of resonances
         Input :  mode  : [3|5]
         Returns: void
         """
 
-        if mode in [3,5]:
-            self.mode=mode
-        elif mode is None:
+        if mode is None:
             print("# PySCRDT : Set mode in [set_mode]")
         else:
-            raise IOError("# PySCRDT::set_mode: Mode needs to be 3 or 5 "
-                          + "depending on the desired resonance description")
+            self.mode = mode
+
+
+    @property
+    def order(self) -> Tuple[int, int, int] | Tuple[int, int, int, int, int]:
+
+        if self._mode == 3:
+            return (self.m, self.n, self.l)
+        elif self._mode == 5:
+            return (self.h, self.i, self.j, self.k, self.l)
+        elif self._mode is None:
+            return self._mode
+        else:
+            raise RuntimeError("Order not available, requires mode == 3 or"
+                               + f" mode==5, but mode=={self._mode}")
+
+    @order.setter
+    def order(self, value: Tuple[int, ...]):
+
+        if self._mode is None:
+            self.mode = len(value)
+
+        elif self._mode != len(value):
+            raise ValueError("len(order) must match mode.  Mode is "
+                             + f"{self._mode}, len(order) is {len(value)}")
+
+        for v in value:
+            if not isinstance(v, int):
+                raise TypeError("All values of order must be of type int")
+
+        if len(value) == 3:
+            self.m, self.n, self.l = value
+            self.h, self.i, self.j, self.k, self.l = (None, None, None, None,
+                                                      None)
+        elif len(value) == 5:
+            self.h, self.i, self.j, self.k, self.l = value
+            self.m, self.n, self.l = (None, None, None)
 
 
     def set_order(self, args):
@@ -152,71 +212,21 @@ class PySCRDT(object):
         Returns: void
         """
 
-        if len(args)==3:
-            if self.mode==3 or self.mode==None:
-                if type(args[0]) is int:
-                    self.m=args[0]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs"
-                                  +" to be of type int")
-                if type(args[1]) is int:
-                    self.n=args[1]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs"
-                                  +" to be of type int")
-                if (type(args[2]) is int) or (args[2]=='any'):
-                    self.l=args[2]
-                else:
-                    raise IOError("# PySCRDT::set_order: harmonic needs to be"
-                                  +" of type int or set to 'any'")
-                self.mode=3
+        self.order = args
+        self.factor = None
+        self.factor_d = None
 
-            else:
-                raise IOError("# PySCRDT::set_order: You need to define the"
-                              +" order using h,i,j,k,l")
 
-        elif len(args)==5:
-            if self.mode==5 or self.mode==None:
-                if type(args[0]) is int:
-                    self.h=args[0]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs "
-                                  + "to be of type int")
-                if type(args[1]) is int:
-                    self.i=args[1]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs "
-                                  + "to be of type int")
-                if type(args[2]) is int:
-                    self.j=args[2]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs "
-                                  + "to be of type int")
-                if type(args[3]) is int:
-                    self.k=args[3]
-                else:
-                    raise IOError("# PySCRDT::set_order: resonance order needs "
-                                  + "to be of type int")
-                if (type(args[4]) is int) or (args[4]=='any'):
-                    self.l=args[4]
-                else:
-                    raise IOError("# PySCRDT::set_order: harmonic needs to be "
-                                  + "of type int or set to 'any'")
-                self.mode=5
+    @property
+    def parameters(self) -> Dict[str, float | int]:
+        return dc.asdict(self._parameters)
 
-            else:
-                raise IOError("# PySCRDT::set_order: You need to define the "
-                              + "order using m,n,l")
-
+    @parameters.setter
+    def parameters(self, value: Dict[str, float | int] | SCParameters):
+        if isinstance(value, SCParameters):
+            self._parameters = value
         else:
-            if self.mode==3:
-                raise IOError("# PySCRDT::set_order: You need to define the "
-                              + "order using m,n,l")
-            if self.mode==5:
-                raise IOError("# PySCRDT::set_order: You need to define the "
-                              + "order using h,i,j,k,l")
-        self.factor=None
-        self.factor_d=None
+            self._parameters = SCParameters(**value)
 
 
     def set_parameters(self, intensity: float = 41e10, bunch_length: float = 5.96,
@@ -249,18 +259,13 @@ class PySCRDT(object):
                               (Default=1)
         """
 
-        self.parameters={'intensity':intensity,
-                         'bunch_length':bunch_length,
-                         'ro':ro,
-                         'emittance_x':emittance_x,
-                         'emittance_y':emittance_y,
-                         'dpp_rms':dpp_rms,
-                         'dpp':dpp,
-                         'bF':bF,
-                         'harmonic':harmonic}
+        self.parameters={'intensity':intensity, 'bunch_length':bunch_length,
+                         'ro':ro, 'emittance_x':emittance_x,
+                         'emittance_y':emittance_y, 'dpp_rms':dpp_rms,
+                         'dpp':dpp, 'bF':bF, 'harmonic':harmonic}
 
 
-    def read_parameters(self, input_file):
+    def read_parameters(self, input_file: str):
         # TODO: Understand input
         """
         Reads the parameters from an input file:
@@ -276,15 +281,15 @@ class PySCRDT(object):
         Returns: void
         """
 
-        params=np.genfromtxt(input_file,dtype=str)
+        params = np.genfromtxt(input_file, dtype=str)
 
         if self.parameters is None:
             self.set_parameters()
 
-        if len(np.shape(params))==1:
+        if len(np.shape(params)) == 1:
             if params[0] not in self.parameters.keys():
-                raise IOError("# PySCRDT::read_parameters: " + params[0] +
-                              " not recognized [check_writing]")
+                raise IOError(f"# PySCRDT::read_parameters: {params[0]}"
+                              + " not recognized [check_writing]")
             else:
                 self.parameters[params[0]]=float(params[2])
 
@@ -340,21 +345,24 @@ class PySCRDT(object):
                     a = np.array(a)
                     a = a[np.where(a[:,0] == self.m)[0]]
 
-                    self.f = a[np.where(a[:,1] == self.n)][0][2]
+                    self.f = ic(a[np.where(a[:,1] == self.n)][0][2])
 
                 except:
                     try:
                         with open(__file__[:__file__.find('PySCRDT.py')] +
                                   'potentialsPy2','rb') as f:
                             a = dill.load(f)
+
                         a = np.array(a)
                         a = a[np.where(a[:,0] == self.m)[0]]
-                        self.f = a[np.where(a[:,1] == self.n)][0][2]
+                        self.f = ic(a[np.where(a[:,1] == self.n)][0][2])
 
                     except:
                         look_up = False
                         print('# PySCRDT::potential: Calculating potential')
 
+        ic(look_up)
+        look_up = False
         # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
             V = ((-1 + sy.exp(-self.x**2 / (self.t + 2*self.a**2)
@@ -400,7 +408,7 @@ class PySCRDT(object):
             res = sy.integrate(sterm, (self.t, 0, sy.oo)).doit()
             result = res.doit()
             self.V = sy.simplify(result)
-            self.f = sy.lambdify((self.a, self.b, self.D), self.V)
+            self.f = ic(sy.lambdify((self.a, self.b, self.D), self.V))
 
     def ksc(self):
         """
@@ -416,16 +424,17 @@ class PySCRDT(object):
             raise IOError("# PySCRDT::ksc: You need to define Madx "
                           + "twiss file in [prepare_data]")
 
-        if self.parameters['bF']:
-            self.K = (2*self.parameters['intensity']*self.parameters['ro']
-                      *(self.parameters['harmonic']/self.parameters['bF'])
-                      /(self.parameters['C']*self.parameters['b']**2
-                        *self.parameters['g']**3))
+        params = self._parameters
+
+        if params.bF:
+            self.K = (2*params.intensity*params.ro
+                      *(params.harmonic/params.bF)
+                      /(params.C*params.b**2 * params.g**3))
 
         else:
-            self.K = (2*self.parameters['intensity']*self.parameters['ro']
-                      /(np.sqrt(2*np.pi)*self.parameters['bunchLength']
-                        *self.parameters['b']**2*self.parameters['g']**3))
+            self.K = (2*params.intensity*params.ro
+                      /(np.sqrt(2*np.pi)*params.bunch_length
+                        *params.b**2 * params.g**3))
 
 
     def beam_size(self):
