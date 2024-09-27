@@ -190,13 +190,18 @@ class PySCRDT(object):
             if not isinstance(v, int):
                 raise TypeError("All values of order must be of type int")
 
+        self.h = None
+        self.i = None
+        self.j = None
+        self.k = None
+        self.l = None
+        self.m = None
+        self.n = None
+
         if len(value) == 3:
             self.m, self.n, self.l = value
-            self.h, self.i, self.j, self.k, self.l = (None, None, None, None,
-                                                      None)
         elif len(value) == 5:
             self.h, self.i, self.j, self.k, self.l = value
-            self.m, self.n, self.l = (None, None, None)
 
 
     def set_order(self, args):
@@ -627,7 +632,7 @@ class PySCRDT(object):
             else:
                 det1 = (sy.cos(self.fx)**abs(self.m)
                         *sy.cos(self.fy)**abs(self.n))
-                
+
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
                 factor1 = sy.collect(det2, sy.exp(1j*self.fx),
