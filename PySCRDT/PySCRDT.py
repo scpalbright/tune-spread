@@ -48,7 +48,7 @@ class SCParameters:
     C: Optional[float] = None
 
 
-class PySCRDT(object):
+class PySCRDT:
     """
     class for the calculation of the rdts
     Returns: PySCRDT instance
