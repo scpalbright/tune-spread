@@ -19,11 +19,6 @@ import numpy as np
 import sympy as sy
 import dill
 
-from icecream import ic
-import inspect
-import sys
-import time
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -336,7 +331,7 @@ class PySCRDT(object):
         Returns:
 
         """
-        ic()
+
         try:
             with open(__file__[:__file__.find('PySCRDT.py')]
                         +'potentialsPy3','rb') as f:
@@ -434,7 +429,7 @@ class PySCRDT(object):
             res = sy.integrate(sterm, (self.t, 0, sy.oo)).doit()
             result = res.doit()
             self.V = sy.simplify(result)
-            self.f = ic(sy.lambdify((self.a, self.b, self.D), self.V))
+            self.f = sy.lambdify((self.a, self.b, self.D), self.V)
 
 
     def ksc(self):
