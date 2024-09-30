@@ -868,7 +868,7 @@ class PySCRDT(object):
                     raise IOError(f"# PySCRDT::update_parameters: {key} "
                                   + "not recognized [check_writing]")
                 else:
-                    self.parameters[key] = value
+                    setattr(self._parameters, key, value)
 
             if self.data is not None:
                 self.beam_size()
