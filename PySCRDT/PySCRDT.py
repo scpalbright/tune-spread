@@ -27,7 +27,7 @@ import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Literal, Optional, List, Tuple, Dict
+    from typing import Literal, Optional, List, Tuple, Dict, Callable
     from sympy import Expr
 
 
@@ -101,6 +101,12 @@ class PySCRDT(object):
         self.feed = False
         self._mode = None
         self._order = None
+
+        self._potential_functions: Dict[Tuple[int, int], Callable] = {}
+        try:
+            self.load_potential_functions()
+        except RuntimeError:
+            print("Pre-calculated potential functions not available")
 
         if type(parameters) is str:
             self.parameters=None
@@ -177,7 +183,7 @@ class PySCRDT(object):
                                + f" mode==5, but mode=={self._mode}")
 
     @order.setter
-    def order(self, value: Tuple[int, ...]):
+    def order(self, value: Tuple[int | str, ...]):
 
         if self._mode is None:
             self.mode = len(value)
@@ -186,8 +192,9 @@ class PySCRDT(object):
             raise ValueError("len(order) must match mode.  Mode is "
                              + f"{self._mode}, len(order) is {len(value)}")
 
+
         for v in value:
-            if not isinstance(v, int):
+            if not isinstance(v, (int, str)):
                 raise TypeError("All values of order must be of type int")
 
         self.h = None
@@ -231,7 +238,10 @@ class PySCRDT(object):
 
     @parameters.setter
     def parameters(self, value: Dict[str, float | int] | SCParameters):
-        if isinstance(value, SCParameters):
+
+        if value is None:
+            self._parameters = value
+        elif isinstance(value, SCParameters):
             self._parameters = value
         else:
             self._parameters = SCParameters(**value)
@@ -315,6 +325,35 @@ class PySCRDT(object):
             self.ksc()
 
 
+    def load_potential_functions(self):
+        """
+        Attempt to load the precalculated potential functions
+
+        Raises:
+            RuntimeError: If the functions cannot be loaded, a
+                          RuntimeError is raised.
+
+        Returns:
+
+        """
+        ic()
+        try:
+            with open(__file__[:__file__.find('PySCRDT.py')]
+                        +'potentialsPy3','rb') as f:
+                pots = dill.load(f)
+
+        except:
+            try:
+                with open(__file__[:__file__.find('PySCRDT.py')]
+                          + 'potentialsPy2','rb') as f:
+                    pots = dill.load(f)
+            except:
+                raise RuntimeError("Cannot load potentials")
+
+        for p in pots:
+            self._potential_functions[(p[0], p[1])] = p[2]
+
+
     def potential(self, feed_down: bool = False, look_up=True):
         #TODO: Check look_up
         """
@@ -345,15 +384,18 @@ class PySCRDT(object):
             if (self.m == 32 and self.n == 8) or (self.m == 8 and self.n == 32):
                 pass
             else:
+                # try:
+                #     self.f = self._potential_functions[(self.m, self.n)]
+                # except KeyError:
+                #     look_up = False
                 try:
                     with open(__file__[:__file__.find('PySCRDT.py')]
                               +'potentialsPy3','rb') as f:
                         a = dill.load(f)
 
-                    a = np.array(a)
-                    a = a[np.where(a[:,0] == self.m)[0]]
-
-                    self.f = ic(a[np.where(a[:,1] == self.n)][0][2])
+                        a = np.array(a)
+                        a = a[np.where(a[:,0] == self.m)[0]]
+                        self.f = a[np.where(a[:,1] == self.n)][0][2]
 
                 except:
                     try:
@@ -361,16 +403,21 @@ class PySCRDT(object):
                                   'potentialsPy2','rb') as f:
                             a = dill.load(f)
 
-                        a = np.array(a)
-                        a = a[np.where(a[:,0] == self.m)[0]]
-                        self.f = ic(a[np.where(a[:,1] == self.n)][0][2])
+                        a = ic(np.array(a))
+                        a = ic(a[np.where(a[:,0] == self.m)[0]])
+                        self.f = ic(ic(a[np.where(a[:,1] == self.n)])[0][2])
 
                     except:
                         look_up = False
                         print('# PySCRDT::potential: Calculating potential')
 
-        ic(look_up)
-        look_up = False
+        # ic(self.m, self.n)
+        # ic(self._potential_functions[(self.m, self.n)])
+        # ic(a)
+        # ic(self.f)
+        # sys.exit()
+        # ic(look_up)
+        # look_up = False
         # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
             V = ((-1 + sy.exp(-self.x**2 / (self.t + 2*self.a**2)
