@@ -384,40 +384,11 @@ class PySCRDT(object):
             if (self.m == 32 and self.n == 8) or (self.m == 8 and self.n == 32):
                 pass
             else:
-                # try:
-                #     self.f = self._potential_functions[(self.m, self.n)]
-                # except KeyError:
-                #     look_up = False
                 try:
-                    with open(__file__[:__file__.find('PySCRDT.py')]
-                              +'potentialsPy3','rb') as f:
-                        a = dill.load(f)
+                    self.f = self._potential_functions[(self.m, self.n)]
+                except KeyError:
+                    look_up = False
 
-                        a = np.array(a)
-                        a = a[np.where(a[:,0] == self.m)[0]]
-                        self.f = a[np.where(a[:,1] == self.n)][0][2]
-
-                except:
-                    try:
-                        with open(__file__[:__file__.find('PySCRDT.py')] +
-                                  'potentialsPy2','rb') as f:
-                            a = dill.load(f)
-
-                        a = ic(np.array(a))
-                        a = ic(a[np.where(a[:,0] == self.m)[0]])
-                        self.f = ic(ic(a[np.where(a[:,1] == self.n)])[0][2])
-
-                    except:
-                        look_up = False
-                        print('# PySCRDT::potential: Calculating potential')
-
-        # ic(self.m, self.n)
-        # ic(self._potential_functions[(self.m, self.n)])
-        # ic(a)
-        # ic(self.f)
-        # sys.exit()
-        # ic(look_up)
-        # look_up = False
         # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
             V = ((-1 + sy.exp(-self.x**2 / (self.t + 2*self.a**2)
