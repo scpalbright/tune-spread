@@ -418,6 +418,7 @@ class PySCRDT(object):
             self.V = sy.simplify(result)
             self.f = ic(sy.lambdify((self.a, self.b, self.D), self.V))
 
+
     def ksc(self):
         """
         Calculates the space charge perveance Ksc from the parameters
@@ -437,11 +438,11 @@ class PySCRDT(object):
         if params.bF:
             self.K = (2*params.intensity*params.ro
                       *(params.harmonic/params.bF)
-                      /(params.C*params.b**2 * params.g**3))
+                      /(params.C * params.b**2 * params.g**3))
 
         else:
             self.K = (2*params.intensity*params.ro
-                      /(np.sqrt(2*np.pi)*params.bunch_ength
+                      /(np.sqrt(2*np.pi)*params.bunch_length
                         * params.b**2 * params.g**3))
 
 
