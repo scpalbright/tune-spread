@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Literal, Optional, List, Tuple, Dict, Callable
-    from sympy import Expr
+    from sympy import Expr, Symbol
 
 
 __version   = 1.1
@@ -46,6 +46,21 @@ class SCParameters:
     b: Optional[float] = None
     g: Optional[float] = None
     C: Optional[float] = None
+
+
+@dc.dataclass
+class SCSymbols:
+
+        x: Symbol = sy.Symbol('x')
+        y: Symbol = sy.Symbol('y')
+        t: Symbol = sy.Symbol('t')
+
+        a = sy.Symbol('a', positive=True, real=True)
+        b = sy.Symbol('b', positive=True, real=True)
+        D = sy.Symbol('D', positive=True, real=True)
+
+        fx = sy.Symbol('fx', positive=True, real=True)
+        fy = sy.Symbol('fy', positive=True, real=True)
 
 
 class PySCRDT:
@@ -77,14 +92,7 @@ class PySCRDT:
 #TODO:                                    If None, TO BE CONFIRMED
         """
 
-        self.x, self.y, self.t= sy.symbols('x y t')
-
-        self.a = sy.Symbol('a', positive=True, real=True)
-        self.b = sy.Symbol('b', positive=True, real=True)
-        self.D = sy.Symbol('D', positive=True, real=True)
-
-        self.fx = sy.Symbol('fx', positive=True, real=True)
-        self.fy = sy.Symbol('fy', positive=True, real=True)
+        self._symbols = SCSymbols()
 
         self.V = None
         self.K = None
@@ -137,6 +145,7 @@ class PySCRDT:
             else:
                 self.set_mode(mode)
             self.set_order(order)
+
 
     @property
     def mode(self) -> int:
@@ -384,52 +393,57 @@ class PySCRDT:
                 except KeyError:
                     look_up = False
 
+        x = self._symbols.x
+        y = self._symbols.y
+        t = self._symbols.t
+        a = self._symbols.a
+        b = self._symbols.b
+        D = self._symbols.D
+
         # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
-            V = ((-1 + sy.exp(-self.x**2 / (self.t + 2*self.a**2)
-                              -self.y**2 / (self.t + 2*self.b**2)))
-                  / sy.sqrt((self.t + 2*self.a**2)
-                           *(self.t + 2*self.b**2)))
+            V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
+                 / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
 
             if self.m>self.n:
                 if feed_down:
-                    p1 = sy.series(V, self.x, 0, abs(self.m)+2).removeO()
+                    p1 = sy.series(V, x, 0, abs(self.m)+2).removeO()
                 else:
-                    p1 = sy.series(V, self.x, 0, abs(self.m)+1).removeO()
+                    p1 = sy.series(V, x, 0, abs(self.m)+1).removeO()
 
-                p2 = sy.series(p1, self.y, 0, abs(self.n)+1).removeO()
-                termy = sy.collect(p2, self.y, evaluate=False)
-                termpowy = termy[self.y**abs(self.n)]
+                p2 = sy.series(p1, y, 0, abs(self.n)+1).removeO()
+                termy = sy.collect(p2, y, evaluate=False)
+                termpowy = termy[y**abs(self.n)]
 
                 if feed_down:
-                    termpowy = sy.expand(termpowy.subs(self.x, self.x+self.D))
+                    termpowy = sy.expand(termpowy.subs(x, x+D))
 
-                termx = sy.collect(termpowy, self.x, evaluate = False)
-                termpowx = termx[self.x**abs(self.m)]
+                termx = sy.collect(termpowy, x, evaluate = False)
+                termpowx = termx[x**abs(self.m)]
                 sterm = sy.simplify(termpowx)
 
             else:
-                p1 = sy.series(V, self.y, 0, abs(self.n)+1).removeO()
+                p1 = sy.series(V, y, 0, abs(self.n)+1).removeO()
 
                 if feed_down:
-                    p2 = sy.series(p1, self.x, 0, abs(self.m)+2).removeO()
+                    p2 = sy.series(p1, x, 0, abs(self.m)+2).removeO()
                 else:
-                    p2 = sy.series(p1, self.x, 0, abs(self.m)+1).removeO()
+                    p2 = sy.series(p1, x, 0, abs(self.m)+1).removeO()
 
-                termx = sy.collect(p2, self.x, evaluate=False)
+                termx = sy.collect(p2, x, evaluate=False)
 
                 if feed_down:
-                    termx = sy.expand(termx.subs(self.x, self.x+self.D))
+                    termx = sy.expand(termx.subs(x, x+D))
 
-                termpowx = termx[self.x**abs(self.m)]
-                termy = sy.collect(termpowx, self.y, evaluate=False)
-                termpowy = termy[self.y**abs(self.n)]
+                termpowx = termx[x**abs(self.m)]
+                termy = sy.collect(termpowx, y, evaluate=False)
+                termpowy = termy[y**abs(self.n)]
                 sterm = sy.simplify(termpowy)
 
-            res = sy.integrate(sterm, (self.t, 0, sy.oo)).doit()
+            res = sy.integrate(sterm, (t, 0, sy.oo)).doit()
             result = res.doit()
             self.V = sy.simplify(result)
-            self.f = sy.lambdify((self.a, self.b, self.D), self.V)
+            self.f = sy.lambdify((a, b, D), self.V)
 
 
     def ksc(self):
@@ -628,30 +642,33 @@ class PySCRDT:
         Returns: [float]
         """
 
+        fx = self._symbols.fx
+        fy = self._symbols.fy
+
         if detuning == True:
             if self.m == 0:
-                det1 = sy.cos(self.fy)**abs(self.n)
+                det1 = sy.cos(fy)**abs(self.n)
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                self.factor_d = float(sy.collect(det2, sy.exp(1j*self.fy),
+                self.factor_d = float(sy.collect(det2, sy.exp(1j*fy),
                                                  evaluate=False)[1])
 
             elif self.n == 0:
-                det1 = sy.cos(self.fx)**abs(self.m)
+                det1 = sy.cos(fx)**abs(self.m)
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                self.factor_d = float(sy.collect(det2, sy.exp(1j*self.fx),
+                self.factor_d = float(sy.collect(det2, sy.exp(1j*fx),
                                                  evaluate=False)[1])
 
             else:
-                det1 = (sy.cos(self.fx)**abs(self.m)
-                        *sy.cos(self.fy)**abs(self.n))
+                det1 = (sy.cos(fx)**abs(self.m)
+                        *sy.cos(fy)**abs(self.n))
 
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                factor1 = sy.collect(det2, sy.exp(1j*self.fx),
+                factor1 = sy.collect(det2, sy.exp(1j*fx),
                                      evaluate=False)[1]
-                self.factor_d = float(sy.collect(factor1, sy.exp(1j*self.fy),
+                self.factor_d = float(sy.collect(factor1, sy.exp(1j*fy),
                                                evaluate=False)[1])
 
             return self.factor_d
@@ -662,35 +679,35 @@ class PySCRDT:
                 self.n = self.j-self.k
 
             if self.m == 0:
-                det1 = sy.cos(self.fy)**abs(self.n)
+                det1 = sy.cos(fy)**abs(self.n)
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                factor = sy.collect(det2, sy.exp(1j*self.fy), evaluate=False)
+                factor = sy.collect(det2, sy.exp(1j*fy), evaluate=False)
                 dictionary = self.re_indexing(factor)
-                self.factor = float(2. * dictionary[sy.exp(1j*self.fy)
+                self.factor = float(2. * dictionary[sy.exp(1j*fy)
                                                     **float(abs(self.n))])
 
             elif self.n == 0:
-                det1 = sy.cos(self.fx)**abs(self.m)
+                det1 = sy.cos(fx)**abs(self.m)
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                factor = sy.collect(det2, sy.exp(1j*self.fx), evaluate=False)
+                factor = sy.collect(det2, sy.exp(1j*fx), evaluate=False)
                 dictionary = self.re_indexing(factor)
-                self.factor = float(2. * dictionary[sy.exp(1j*self.fx)
+                self.factor = float(2. * dictionary[sy.exp(1j*fx)
                                                     **float(abs(self.m))])
 
             else:
-                det1 = (sy.cos(self.fx)**abs(self.m)
-                        *sy.cos(self.fy)**abs(self.n))
+                det1 = (sy.cos(fx)**abs(self.m)
+                        *sy.cos(fy)**abs(self.n))
                 det3 = det1.rewrite(sy.exp)
                 det2 = sy.expand(det3)
-                factor1 = sy.collect(det2, sy.exp(1j*self.fx), evaluate=False)
+                factor1 = sy.collect(det2, sy.exp(1j*fx), evaluate=False)
                 dictionary = self.re_indexing(factor1)
-                factor1 = dictionary[sy.exp(1j*self.fx)**float(abs(self.m))]
-                factor2 = sy.collect(factor1, sy.exp(1j*self.fy),
+                factor1 = dictionary[sy.exp(1j*fx)**float(abs(self.m))]
+                factor2 = sy.collect(factor1, sy.exp(1j*fy),
                                      evaluate=False)
                 dictionary = self.re_indexing(factor2)
-                self.factor = float(2. * dictionary[sy.exp(1j*self.fy)
+                self.factor = float(2. * dictionary[sy.exp(1j*fy)
                                                     **float(abs(self.n))])
 
             return self.factor
