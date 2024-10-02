@@ -285,6 +285,19 @@ class PySCRDT:
                          'emittance_y':emittance_y, 'dpp_rms':dpp_rms,
                          'dpp':dpp, 'bF':bF, 'harmonic':harmonic}
 
+    def _set_single_parameter(self, name: str, value: float | int):
+
+        if self._parameters is None:
+            self._parameters = SCParameters()
+
+        setattr(self._parameters, name, value)
+
+    def _get_single_parameter(self, name: str) -> float | int:
+
+        if self._parameters is None:
+            self._parameters = SCParameters()
+
+        return getattr(self._parameters, name)
 
     def read_parameters(self, input_file: str):
         # TODO: Understand input
@@ -1009,96 +1022,96 @@ class PySCRDT:
 
     @property
     def intensity(self) -> float:
-        return self._parameters.intensity
+        return self._get_single_parameter("intensity")
 
     @intensity.setter
     def intensity(self, value: float):
-        self._parameters.intensity = value
+        self._set_single_parameter("intensity", value)
 
     @property
     def bunch_length(self) -> float:
-        return self._parameters.bunch_length
+        return self._get_single_parameter("bunch_length")
 
     @bunch_length.setter
     def bunch_length(self, value: float):
-        self._parameters.bunch_length = value
+        self._set_single_parameter("bunch_length", value)
 
     @property
     def ro(self) -> float:
-        return self._parameters.ro
+        return self._get_single_parameter("ro")
 
     @ro.setter
     def ro(self, value: float):
-        self._parameters.ro = value
+        self._set_single_parameter("ro", value)
 
     @property
     def emittance_x(self) -> float:
-        return self._parameters.emittance_x
+        return self._get_single_parameter("emittance_x")
 
     @emittance_x.setter
     def emittance_x(self, value: float):
-        self._parameters.emittance_x = value
+        self._set_single_parameter("emittance_x", value)
 
     @property
     def emittance_y(self) -> float:
-        return self._parameters.emittance_y
+        return self._get_single_parameter("emittance_y")
 
     @emittance_y.setter
     def emittance_y(self, value: float):
-        self._parameters.emittance_y = value
+        self._set_single_parameter("emittance_y", value)
 
     @property
     def dpp_rms(self) -> float:
-        return self._parameters.dpp_rms
+        return self._get_single_parameter("dpp_rms")
 
     @dpp_rms.setter
     def dpp_rms(self, value: float):
-        self._parameters.dpp_rms = value
+        self._set_single_parameter("dpp_rms", value)
 
     @property
     def dpp(self) -> float:
-        return self._parameters.dpp
+        return self._get_single_parameter("dpp")
 
     @dpp.setter
     def dpp(self, value: float):
-        self._parameters.dpp = value
+        self._set_single_parameter("dpp", value)
 
     @property
     def bunching_factor(self) -> float:
-        return self._parameters.bF
+        return self._get_single_parameter("bF")
 
     @bunching_factor.setter
     def bunching_factor(self, value: float):
-        self._parameters.bF = value
+        self._set_single_parameter("bF", value)
 
     @property
     def harmonic(self) -> int:
-        return self._parameters.harmonic
+        return self._get_single_parameter("harmonic")
 
     @harmonic.setter
     def harmonic(self, value: int):
-        self._parameters.harmonic = value
+        self._set_single_parameter("harmonic", value)
 
     @property
     def b(self) -> float:
-        return self._parameters.b
+        return self._get_single_parameter("b")
 
     @b.setter
     def b(self, value: float):
-        self._parameters.b = value
+        self._set_single_parameter("b", value)
 
     @property
     def g(self) -> float:
-        return self._parameters.g
+        return self._get_single_parameter("g")
 
     @g.setter
     def g(self, value: float):
-        self._parameters.g = value
+        self._set_single_parameter("g", value)
 
     @property
     def C(self) -> float:
-        return self._parameters.C
+        return self._get_single_parameter("C")
 
     @C.setter
     def C(self, value: float):
-        self._parameters.C = value
+        self._set_single_parameter("C", value)
