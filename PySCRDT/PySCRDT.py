@@ -829,6 +829,26 @@ class PySCRDT:
         self.rdt_d = sum(self.rdt_s_d)
 
 
+    def calc_detuning(self, order: Optional[Tuple[int | str, ...]] = None)\
+                                                        -> Tuple[float, float]:
+        """
+        Method to calculate the detuning for a specific order.
+
+        Input:
+            order: Tuple[int | str, ...] : The order at which to
+                    calculate, either m, n, l, or h, i, j, k, l
+
+        Returns:
+            Tuple[float, float]: The detuning at the specified order.
+        """
+
+        self.order = order
+        self.potential()
+        self.detuning()
+
+        return self.get_detuning()
+
+
     def update_parameters(self, **kwargs):
         """
         Updates the parameter dictionary
@@ -966,7 +986,7 @@ class PySCRDT:
         return self.RDT
 
 
-    def get_detuning(self) -> dict:
+    def get_detuning(self) -> float:
         """
         Returns the RDTs
         Returns: [dict] the resonance driving terms
