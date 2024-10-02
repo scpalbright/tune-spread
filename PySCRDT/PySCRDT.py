@@ -146,7 +146,6 @@ class PySCRDT:
                 self.set_mode(mode)
             self.set_order(order)
 
-
     @property
     def mode(self) -> int:
         return self._mode
@@ -829,20 +828,20 @@ class PySCRDT:
         self.rdt_d = sum(self.rdt_s_d)
 
 
-    def calc_detuning(self, order: Optional[Tuple[int | str, ...]] = None)\
+    def calc_detuning(self, *args: int | str)\
                                                         -> Tuple[float, float]:
         """
         Method to calculate the detuning for a specific order.
 
         Input:
-            order: Tuple[int | str, ...] : The order at which to
+            args: int | str : The orders at which to
                     calculate, either m, n, l, or h, i, j, k, l
 
         Returns:
             Tuple[float, float]: The detuning at the specified order.
         """
 
-        self.order = order
+        self.order = args
         self.potential()
         self.detuning()
 
@@ -1007,3 +1006,99 @@ class PySCRDT:
         return {'Set & Update':['intensity', 'bunch_length', 'emittance_x',
                                 'emittance_y', 'dpp_rms', 'dpp', 'ro'],
                                  'Update only': ['b', 'g']}
+
+    @property
+    def intensity(self) -> float:
+        return self._parameters.intensity
+
+    @intensity.setter
+    def intensity(self, value: float):
+        self._parameters.intensity = value
+
+    @property
+    def bunch_length(self) -> float:
+        return self._parameters.bunch_length
+
+    @bunch_length.setter
+    def bunch_length(self, value: float):
+        self._parameters.bunch_length = value
+
+    @property
+    def ro(self) -> float:
+        return self._parameters.ro
+
+    @ro.setter
+    def ro(self, value: float):
+        self._parameters.ro = value
+
+    @property
+    def emittance_x(self) -> float:
+        return self._parameters.emittance_x
+
+    @emittance_x.setter
+    def emittance_x(self, value: float):
+        self._parameters.emittance_x = value
+
+    @property
+    def emittance_y(self) -> float:
+        return self._parameters.emittance_y
+
+    @emittance_y.setter
+    def emittance_y(self, value: float):
+        self._parameters.emittance_y = value
+
+    @property
+    def dpp_rms(self) -> float:
+        return self._parameters.dpp_rms
+
+    @dpp_rms.setter
+    def dpp_rms(self, value: float):
+        self._parameters.dpp_rms = value
+
+    @property
+    def dpp(self) -> float:
+        return self._parameters.dpp
+
+    @dpp.setter
+    def dpp(self, value: float):
+        self._parameters.dpp = value
+
+    @property
+    def bunching_factor(self) -> float:
+        return self._parameters.bF
+
+    @bunching_factor.setter
+    def bunching_factor(self, value: float):
+        self._parameters.bF = value
+
+    @property
+    def harmonic(self) -> int:
+        return self._parameters.harmonic
+
+    @harmonic.setter
+    def harmonic(self, value: int):
+        self._parameters.harmonic = value
+
+    @property
+    def b(self) -> float:
+        return self._parameters.b
+
+    @b.setter
+    def b(self, value: float):
+        self._parameters.b = value
+
+    @property
+    def g(self) -> float:
+        return self._parameters.g
+
+    @g.setter
+    def g(self, value: float):
+        self._parameters.g = value
+
+    @property
+    def C(self) -> float:
+        return self._parameters.C
+
+    @C.setter
+    def C(self, value: float):
+        self._parameters.C = value
