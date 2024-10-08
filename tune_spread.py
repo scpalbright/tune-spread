@@ -25,18 +25,18 @@ if 'bF' in keys:
 else:
     bF = None
 
-s.set_parameters(intensity = input_parameters.intensity,
-                 bunch_length = bunch_length,
-                 emittance_x = input_parameters.emittance_x,
-                 emittance_y = input_parameters.emittance_y,
-                 dpp_rms = input_parameters.dpp_rms, bF = bF)
+# s.set_parameters(intensity = input_parameters.intensity,
+#                  bunch_length = bunch_length,
+#                  emittance_x = input_parameters.emittance_x,
+#                  emittance_y = input_parameters.emittance_y,
+#                  dpp_rms = input_parameters.dpp_rms, bF = bF)
 
-# s.intensity = input_parameters.intensity
-# s.bunch_length = bunch_length
-# s.emittance_x = input_parameters.emittance_x
-# s.emittance_y = input_parameters.emittance_y
-# s.dpp_rms = input_parameters.dpp_rms
-# s.bunching_factor = bF
+s.intensity = input_parameters.intensity
+s.bunch_length = bunch_length
+s.emittance_x = input_parameters.emittance_x
+s.emittance_y = input_parameters.emittance_y
+s.dpp_rms = input_parameters.dpp_rms
+s.bunching_factor = bF
 
 s.prepare_data(twiss_file = input_parameters.twiss_file)
 
@@ -92,9 +92,7 @@ for i in range(0, 21, 2):
             s.detuning()
             detuning.append([i, j, s.get_detuning()])
 
-np.save("bad_rdts_d", s._all_rdt_s_d)
-
-detuning=ic(np.array(detuning))
+detuning=np.array(detuning)
 
 #  initialize grid for calculation
 

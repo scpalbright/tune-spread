@@ -295,6 +295,10 @@ class PySCRDT:
             self._parameters = SCParameters()
 
         setattr(self._parameters, name, value)
+# TODO: Decide if good idea to do on every set, probably not
+        if self.data is not None:
+            self.beam_size()
+            self.ksc()
 
     def _get_single_parameter(self, name: str) -> float | int:
 
