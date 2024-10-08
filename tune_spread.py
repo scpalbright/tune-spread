@@ -6,9 +6,6 @@ import resonance_lines
 import input_parameters
 import matplotlib
 
-from icecream import ic
-import sys
-
 s = PySCRDT()
 
 keys = dir(input_parameters)
@@ -25,12 +22,6 @@ if 'bF' in keys:
 else:
     bF = None
 
-# s.set_parameters(intensity = input_parameters.intensity,
-#                  bunch_length = bunch_length,
-#                  emittance_x = input_parameters.emittance_x,
-#                  emittance_y = input_parameters.emittance_y,
-#                  dpp_rms = input_parameters.dpp_rms, bF = bF)
-
 s.intensity = input_parameters.intensity
 s.bunch_length = bunch_length
 s.emittance_x = input_parameters.emittance_x
@@ -41,39 +32,24 @@ s.bunching_factor = bF
 s.prepare_data(twiss_file = input_parameters.twiss_file)
 
 if ('b' in keys) and ('g' in keys):
-    # s.update_parameters(b = input_parameters.b)
-    # s.update_parameters(g = input_parameters.g)
-
     s.b = input_parameters.b
     s.g = input_parameters.g
 
 elif 'g' in keys:
-    # s.update_parameters(g = input_parameters.g)
-    # s.update_parameters(b = np.sqrt(1 - 1/input_parameters.g**2))
-
     s.g = input_parameters.g
     s.b = np.sqrt(1 - 1/input_parameters.g**2)
 
 elif 'b' in keys:
-    # s.update_parameters(b = input_parameters.b)
-    # s.update_parameters(g = 1/np.sqrt(1 - input_parameters.b**2))
-
     s.b = input_parameters.b
     s.g = 1/np.sqrt(1 - input_parameters.b**2)
 
 if 'bunchLength_ns' in keys:
-    # s.update_parameters(bunch_length = bunch_length*s.parameters['b'])
-
     s.bunch_length = bunch_length*s.b
 
 if 'ro' in keys:
-    # s.update_parameters(ro = input_parameters.ro)
-
     s.ro = input_parameters.ro
 
 if 'harmonic' in keys:
-    # s.update_parameters(harmonic = input_parameters.harmonic)
-
     s.harmonic = input_parameters.harmonic
 # caclulate detuning coefficients using potentials up to 20th order (needed for up to 3 sigma particles)
 
@@ -86,11 +62,7 @@ for i in range(0, 21, 2):
             pass
 
         elif i+j<21:
-            # detuning.append([i, j, s.calc_detuning(i, j, 'any')])
-            s.set_order([int(i), int(j), 'any'])
-            s.potential()
-            s.detuning()
-            detuning.append([i, j, s.get_detuning()])
+            detuning.append([i, j, s.calc_detuning(i, j, 'any')])
 
 detuning=np.array(detuning)
 

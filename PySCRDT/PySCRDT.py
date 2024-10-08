@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from typing import Literal, Optional, List, Tuple, Dict, Callable
     from sympy import Expr, Symbol
 
-
 __version   = 1.1
 __PyVersion = ["2.7"]
 __author    = ["Foteini Asvesta"]
@@ -289,13 +288,12 @@ class PySCRDT:
 
     def _set_single_parameter(self, name: str, value: float | int):
 
-        print(f"Setting {name} to {value}")
-
         if self._parameters is None:
             self._parameters = SCParameters()
 
         setattr(self._parameters, name, value)
-# TODO: Decide if good idea to do on every set, probably not
+
+        # TODO: Decide if good idea to do on every set, probably not
         if self.data is not None:
             self.beam_size()
             self.ksc()
@@ -634,7 +632,7 @@ class PySCRDT:
         data2[:,7] += self._parameters.C/len(s)
         data2[:,0] = s
 
-        self.data=data2
+        self.data = data2
         self.beam_size()
         self.ksc()
 
