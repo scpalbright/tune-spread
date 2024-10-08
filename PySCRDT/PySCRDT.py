@@ -18,6 +18,18 @@ import dataclasses as dc
 import numpy as np
 import sympy as sy
 import dill
+import sys
+
+from packaging.version import Version
+
+_ver_numpy = Version(np.__version__) == Version("1.23.1")
+_ver_sympy = Version(sy.__version__) == Version("1.10.1")
+_ver_dill = Version(dill.__version__) == Version("0.3.4")
+
+if _ver_numpy and _ver_sympy and _ver_dill and sys.version.startswith("3.10"):
+    _USE_PRECALC = True
+else:
+    _USE_PRECALC = False
 
 from typing import TYPE_CHECKING
 
@@ -105,10 +117,10 @@ class PySCRDT:
         self._order = None
 
         self._potential_functions: Dict[Tuple[int, int], Callable] = {}
-        try:
+        if _USE_PRECALC:
             self.load_potential_functions()
-        except RuntimeError:
-            print("Pre-calculated potential functions not available")
+        else:
+            print("# PySCRDT : Precalculated potentials are not available")
 
         if type(parameters) is str:
             self.parameters=None
@@ -376,14 +388,22 @@ class PySCRDT:
             self._potential_functions[(p[0], p[1])] = p[2]
 
 
-    def potential(self, feed_down: bool = False, look_up=True):
-        #TODO: Check look_up
+    def potential(self, feed_down: bool = False, look_up: bool = True):
         """
         Calculates the space charge potential for the given resonance
         order
-        Inputs : feedDown : [bool] needed when single particle Dp/p non 0
-                            (default=False)
+        Inputs : feed_down : [bool] needed when single particle Dp/p non 0
+                             (default=False)
+                 look_up : [bool] Flag to indicate if pre-calculated
+                            potentials should be used.  If True, but
+                            versions do not allow it, will be reverted
+                            to False.
+                            (default=True)
         """
+
+        if not _USE_PRECALC:
+            look_up = False
+
         if self.mode == 5:
             self.m = self.h+self.i
             self.n = self.j+self.k
@@ -411,6 +431,12 @@ class PySCRDT:
                 except KeyError:
                     look_up = False
 
+        if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
+            self.calc_potential_function(feed_down)
+
+
+    def calc_potential_function(self, feed_down: bool = False):
+
         x = self._symbols.x
         y = self._symbols.y
         t = self._symbols.t
@@ -419,49 +445,49 @@ class PySCRDT:
         D = self._symbols.D
 
         # TODO: Make new pre-calculator
-        if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
-            V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
-                 / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
+        print(f"# PySCRDT : Calculating potential for {self.m, self.n}")
+        V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
+                / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
 
-            if self.m>self.n:
-                if feed_down:
-                    p1 = sy.series(V, x, 0, abs(self.m)+2).removeO()
-                else:
-                    p1 = sy.series(V, x, 0, abs(self.m)+1).removeO()
-
-                p2 = sy.series(p1, y, 0, abs(self.n)+1).removeO()
-                termy = sy.collect(p2, y, evaluate=False)
-                termpowy = termy[y**abs(self.n)]
-
-                if feed_down:
-                    termpowy = sy.expand(termpowy.subs(x, x+D))
-
-                termx = sy.collect(termpowy, x, evaluate = False)
-                termpowx = termx[x**abs(self.m)]
-                sterm = sy.simplify(termpowx)
-
+        if self.m>self.n:
+            if feed_down:
+                p1 = sy.series(V, x, 0, abs(self.m)+2).removeO()
             else:
-                p1 = sy.series(V, y, 0, abs(self.n)+1).removeO()
+                p1 = sy.series(V, x, 0, abs(self.m)+1).removeO()
 
-                if feed_down:
-                    p2 = sy.series(p1, x, 0, abs(self.m)+2).removeO()
-                else:
-                    p2 = sy.series(p1, x, 0, abs(self.m)+1).removeO()
+            p2 = sy.series(p1, y, 0, abs(self.n)+1).removeO()
+            termy = sy.collect(p2, y, evaluate=False)
+            termpowy = termy[y**abs(self.n)]
 
-                termx = sy.collect(p2, x, evaluate=False)
+            if feed_down:
+                termpowy = sy.expand(termpowy.subs(x, x+D))
 
-                if feed_down:
-                    termx = sy.expand(termx.subs(x, x+D))
+            termx = sy.collect(termpowy, x, evaluate = False)
+            termpowx = termx[x**abs(self.m)]
+            sterm = sy.simplify(termpowx)
 
-                termpowx = termx[x**abs(self.m)]
-                termy = sy.collect(termpowx, y, evaluate=False)
-                termpowy = termy[y**abs(self.n)]
-                sterm = sy.simplify(termpowy)
+        else:
+            p1 = sy.series(V, y, 0, abs(self.n)+1).removeO()
 
-            res = sy.integrate(sterm, (t, 0, sy.oo)).doit()
-            result = res.doit()
-            self.V = sy.simplify(result)
-            self.f = sy.lambdify((a, b, D), self.V)
+            if feed_down:
+                p2 = sy.series(p1, x, 0, abs(self.m)+2).removeO()
+            else:
+                p2 = sy.series(p1, x, 0, abs(self.m)+1).removeO()
+
+            termx = sy.collect(p2, x, evaluate=False)
+
+            if feed_down:
+                termx = sy.expand(termx.subs(x, x+D))
+
+            termpowx = termx[x**abs(self.m)]
+            termy = sy.collect(termpowx, y, evaluate=False)
+            termpowy = termy[y**abs(self.n)]
+            sterm = sy.simplify(termpowy)
+
+        res = sy.integrate(sterm, (t, 0, sy.oo)).doit()
+        result = res.doit()
+        self.V = sy.simplify(result)
+        self.f = sy.lambdify((a, b, D), self.V)
 
 
     def ksc(self):
