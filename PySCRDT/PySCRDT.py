@@ -389,12 +389,16 @@ class PySCRDT:
 
 
     def potential(self, feed_down: bool = False, look_up: bool = True):
-        #TODO: Check look_up
         """
         Calculates the space charge potential for the given resonance
         order
-        Inputs : feedDown : [bool] needed when single particle Dp/p non 0
-                            (default=False)
+        Inputs : feed_down : [bool] needed when single particle Dp/p non 0
+                             (default=False)
+                 look_up : [bool] Flag to indicate if pre-calculated
+                            potentials should be used.  If True, but
+                            versions do not allow it, will be reverted
+                            to False.
+                            (default=True)
         """
 
         if not _USE_PRECALC:
