@@ -146,6 +146,8 @@ class PySCRDT:
                 self.set_mode(mode)
             self.set_order(order)
 
+        self._all_rdt_s_d = []
+
     @property
     def mode(self) -> int:
         return self._mode
@@ -839,6 +841,8 @@ class PySCRDT:
                             * (np.sqrt(2*self.data[:,2]) ** abs(self.j+self.k))
                             * self.f(self.sx, self.sy,
                                      self.parameters['dpp']*self.data[:,3]))
+
+        self._all_rdt_s_d.append(self.rdt_s_d.copy())
 
         self.rdt_d = sum(self.rdt_s_d)
 

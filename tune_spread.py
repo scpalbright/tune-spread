@@ -77,10 +77,6 @@ if 'harmonic' in keys:
     s.harmonic = input_parameters.harmonic
 # caclulate detuning coefficients using potentials up to 20th order (needed for up to 3 sigma particles)
 
-
-print(s._parameters)
-# sys.exit()
-
 detuning=[]
 # order in x
 for i in range(0, 21, 2):
@@ -95,6 +91,8 @@ for i in range(0, 21, 2):
             s.potential()
             s.detuning()
             detuning.append([i, j, s.get_detuning()])
+
+np.save("bad_rdts_d", s._all_rdt_s_d)
 
 detuning=ic(np.array(detuning))
 
