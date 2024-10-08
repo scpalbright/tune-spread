@@ -18,6 +18,18 @@ import dataclasses as dc
 import numpy as np
 import sympy as sy
 import dill
+import sys
+
+from packaging.version import Version
+
+_ver_numpy = Version(np.__version__) == Version("1.23.1")
+_ver_sympy = Version(sy.__version__) == Version("1.10.1")
+_ver_dill = Version(dill.__version__) == Version("0.3.4")
+
+if _ver_numpy and _ver_sympy and _ver_dill and sys.version.startswith("3.10"):
+    _USE_PRECALC = True
+else:
+    _USE_PRECALC = False
 
 from typing import TYPE_CHECKING
 
