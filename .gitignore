@@ -18,3 +18,5 @@ build/
 .vscode/
 .spyproject/
 
+# Specific files
+figure.png

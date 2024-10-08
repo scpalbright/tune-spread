@@ -5,7 +5,7 @@ import matplotlib
 matplotlib.rcParams['mathtext.fontset'] = 'dejavusans'
 matplotlib.rcParams['mathtext.rm'] = 'sans'
 
-class resonance_lines(object):
+class ResonanceLines:
 
 	def __init__(self, Qx_range, Qy_range, orders, periodicity):
 
@@ -35,10 +35,10 @@ class resonance_lines(object):
 		nx = np.array(nx)
 		ny = np.array(ny)
 
-		cextr = np.array([nx * np.floor(self.Qx_min) + ny*np.floor(self.Qy_min),
-						  nx * np.ceil(self.Qx_max) + ny*np.floor(self.Qy_min),
-						  nx * np.floor(self.Qx_min) + ny*np.ceil(self.Qy_max),
-						  nx * np.ceil(self.Qx_max) + ny*np.ceil(self.Qy_max)],
+		cextr = np.array([nx*np.floor(self.Qx_min) + ny*np.floor(self.Qy_min),
+						  nx*np.ceil(self.Qx_max) + ny*np.floor(self.Qy_min),
+						  nx*np.floor(self.Qx_min) + ny*np.ceil(self.Qy_max),
+						  nx*np.ceil(self.Qx_max) + ny*np.ceil(self.Qy_max)],
 						  dtype='int')
 
 		cmin = np.min(cextr, axis=0)
