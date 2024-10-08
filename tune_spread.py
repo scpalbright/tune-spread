@@ -90,7 +90,11 @@ for i in range(0, 21, 2):
             pass
 
         elif i+j<21:
-            detuning.append([i, j, s.calc_detuning(i, j, 'any')])
+            # detuning.append([i, j, s.calc_detuning(i, j, 'any')])
+            s.set_order([int(i), int(j), 'any'])
+            s.potential()
+            s.detuning()
+            detuning.append([i, j, s.get_detuning()])
 
 detuning=ic(np.array(detuning))
 
