@@ -117,10 +117,10 @@ class PySCRDT:
         self._order = None
 
         self._potential_functions: Dict[Tuple[int, int], Callable] = {}
-        try:
+        if _USE_PRECALC:
             self.load_potential_functions()
-        except RuntimeError:
-            print("Pre-calculated potential functions not available")
+        else:
+            print("# PySCRDT : Precalculated potentials are not available")
 
         if type(parameters) is str:
             self.parameters=None
@@ -388,7 +388,7 @@ class PySCRDT:
             self._potential_functions[(p[0], p[1])] = p[2]
 
 
-    def potential(self, feed_down: bool = False, look_up=True):
+    def potential(self, feed_down: bool = False, look_up: bool = True):
         #TODO: Check look_up
         """
         Calculates the space charge potential for the given resonance
@@ -396,6 +396,10 @@ class PySCRDT:
         Inputs : feedDown : [bool] needed when single particle Dp/p non 0
                             (default=False)
         """
+
+        if not _USE_PRECALC:
+            look_up = False
+
         if self.mode == 5:
             self.m = self.h+self.i
             self.n = self.j+self.k
@@ -432,6 +436,9 @@ class PySCRDT:
 
         # TODO: Make new pre-calculator
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
+
+            print("# PySCRDT : No precalculated potential available, "
+                  + f"calculating {self.m, self.n}")
             V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
                  / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
 
