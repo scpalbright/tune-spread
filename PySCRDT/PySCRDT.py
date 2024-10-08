@@ -427,6 +427,12 @@ class PySCRDT:
                 except KeyError:
                     look_up = False
 
+        if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
+            self.calc_potential_function(feed_down)
+
+
+    def calc_potential_function(self, feed_down: bool = False):
+
         x = self._symbols.x
         y = self._symbols.y
         t = self._symbols.t
@@ -435,52 +441,49 @@ class PySCRDT:
         D = self._symbols.D
 
         # TODO: Make new pre-calculator
-        if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
+        print(f"# PySCRDT : Calculating potential for {self.m, self.n}")
+        V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
+                / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
 
-            print("# PySCRDT : No precalculated potential available, "
-                  + f"calculating {self.m, self.n}")
-            V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
-                 / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
-
-            if self.m>self.n:
-                if feed_down:
-                    p1 = sy.series(V, x, 0, abs(self.m)+2).removeO()
-                else:
-                    p1 = sy.series(V, x, 0, abs(self.m)+1).removeO()
-
-                p2 = sy.series(p1, y, 0, abs(self.n)+1).removeO()
-                termy = sy.collect(p2, y, evaluate=False)
-                termpowy = termy[y**abs(self.n)]
-
-                if feed_down:
-                    termpowy = sy.expand(termpowy.subs(x, x+D))
-
-                termx = sy.collect(termpowy, x, evaluate = False)
-                termpowx = termx[x**abs(self.m)]
-                sterm = sy.simplify(termpowx)
-
+        if self.m>self.n:
+            if feed_down:
+                p1 = sy.series(V, x, 0, abs(self.m)+2).removeO()
             else:
-                p1 = sy.series(V, y, 0, abs(self.n)+1).removeO()
+                p1 = sy.series(V, x, 0, abs(self.m)+1).removeO()
 
-                if feed_down:
-                    p2 = sy.series(p1, x, 0, abs(self.m)+2).removeO()
-                else:
-                    p2 = sy.series(p1, x, 0, abs(self.m)+1).removeO()
+            p2 = sy.series(p1, y, 0, abs(self.n)+1).removeO()
+            termy = sy.collect(p2, y, evaluate=False)
+            termpowy = termy[y**abs(self.n)]
 
-                termx = sy.collect(p2, x, evaluate=False)
+            if feed_down:
+                termpowy = sy.expand(termpowy.subs(x, x+D))
 
-                if feed_down:
-                    termx = sy.expand(termx.subs(x, x+D))
+            termx = sy.collect(termpowy, x, evaluate = False)
+            termpowx = termx[x**abs(self.m)]
+            sterm = sy.simplify(termpowx)
 
-                termpowx = termx[x**abs(self.m)]
-                termy = sy.collect(termpowx, y, evaluate=False)
-                termpowy = termy[y**abs(self.n)]
-                sterm = sy.simplify(termpowy)
+        else:
+            p1 = sy.series(V, y, 0, abs(self.n)+1).removeO()
 
-            res = sy.integrate(sterm, (t, 0, sy.oo)).doit()
-            result = res.doit()
-            self.V = sy.simplify(result)
-            self.f = sy.lambdify((a, b, D), self.V)
+            if feed_down:
+                p2 = sy.series(p1, x, 0, abs(self.m)+2).removeO()
+            else:
+                p2 = sy.series(p1, x, 0, abs(self.m)+1).removeO()
+
+            termx = sy.collect(p2, x, evaluate=False)
+
+            if feed_down:
+                termx = sy.expand(termx.subs(x, x+D))
+
+            termpowx = termx[x**abs(self.m)]
+            termy = sy.collect(termpowx, y, evaluate=False)
+            termpowy = termy[y**abs(self.n)]
+            sterm = sy.simplify(termpowy)
+
+        res = sy.integrate(sterm, (t, 0, sy.oo)).doit()
+        result = res.doit()
+        self.V = sy.simplify(result)
+        self.f = sy.lambdify((a, b, D), self.V)
 
 
     def ksc(self):
