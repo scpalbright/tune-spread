@@ -287,6 +287,8 @@ class PySCRDT:
 
     def _set_single_parameter(self, name: str, value: float | int):
 
+        print(f"Setting {name} to {value}")
+
         if self._parameters is None:
             self._parameters = SCParameters()
 
