@@ -418,9 +418,6 @@ class PySCRDT:
                             (default=True)
         """
 
-        if not _USE_PRECALC:
-            look_up = False
-
         if self.mode == 5:
             self.m = self.h+self.i
             self.n = self.j+self.k
@@ -450,6 +447,7 @@ class PySCRDT:
 
         if (self.m+self.n > 21) or (feed_down == True) or (look_up == False):
             self.calc_potential_function(feed_down)
+            self._potential_functions[(self.m, self.n)] = self.f
 
 
     def calc_potential_function(self, feed_down: bool = False):
