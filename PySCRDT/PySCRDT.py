@@ -19,8 +19,16 @@ import numpy as np
 import sympy as sy
 import dill
 import sys
-
+from typing import TYPE_CHECKING
 from packaging.version import Version
+
+from . import verbosity as verb
+
+
+if TYPE_CHECKING:
+    from typing import Literal, Optional, List, Tuple, Dict, Callable
+    from sympy import Expr, Symbol
+
 
 _ver_numpy = Version(np.__version__) == Version("1.23.1")
 _ver_sympy = Version(sy.__version__) == Version("1.10.1")
@@ -30,12 +38,6 @@ if _ver_numpy and _ver_sympy and _ver_dill and sys.version.startswith("3.10"):
     _USE_PRECALC = True
 else:
     _USE_PRECALC = False
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from typing import Literal, Optional, List, Tuple, Dict, Callable
-    from sympy import Expr, Symbol
 
 __version   = 1.1
 __PyVersion = ["2.7"]
@@ -83,7 +85,8 @@ class PySCRDT:
     def __init__(self, parameters: bool | str = False,
                  mode: Optional[Literal[3] | Literal[5]] = None,
                  twiss_file: Optional[str] = None, order: Optional[List] = None,
-                 twiss_table_xsuite: Optional[str] = None):
+                 twiss_table_xsuite: Optional[str] = None,
+                 verbosity: int = 1):
         """
         Initialization function
         Input :  parameters : [bool|str]  Parameters needed for the
@@ -116,11 +119,15 @@ class PySCRDT:
         self._mode = None
         self._order = None
 
+        self.verb_handler = verb.VerbosityHandler()
+        self.verbosity = verbosity
+
         self._potential_functions: Dict[Tuple[int, int], Callable] = {}
         if _USE_PRECALC:
             self.load_potential_functions()
         else:
-            print("# PySCRDT : Precalculated potentials are not available")
+            self.verb_handler("# PySCRDT : Precalculated potentials are not"
+                               + " available")
 
         if type(parameters) is str:
             self.parameters=None
@@ -132,14 +139,15 @@ class PySCRDT:
                 self.set_parameters()
             else:
                 self.parameters=None
-                print("# PySCRDT : Set parameters with function [set_parameters]"
-                      +" or read parameters with [read_parameters]")
+                self.verb_handler("# PySCRDT : Set parameters with function "
+                                  +"[set_parameters] or read parameters with "
+                                  +"[read_parameters]")
 
         if twiss_file is None:
             if twiss_table_xsuite is None:
-                print("# PySCRDT : Import Madx twiss file using the function "
-                      + "[prepare_data] or X-suite Twiss from method "
-                      + "[twiss_table_xsuite]")
+                self.verb_handler("# PySCRDT : Import Madx twiss file using "
+                                  + "the function [prepare_data] or X-suite "
+                                  + "Twiss from method [twiss_table_xsuite]")
             else:
                 self.load_twiss_from_xsuite(twiss_table_xsuite)
 
@@ -147,9 +155,9 @@ class PySCRDT:
             self.prepare_data(twiss_file)
 
         if (order is None) and (mode is None):
-            print("# PySCRDT : Set order in [set_order]")
+            self.verb_handler("# PySCRDT : Set order in [set_order]")
         elif order is None:
-            print("# PySCRDT : Set order in [set_order]")
+            self.verb_handler("# PySCRDT : Set order in [set_order]")
         else:
             if mode is None:
                 self.set_mode(len(order))
@@ -158,6 +166,15 @@ class PySCRDT:
             self.set_order(order)
 
         self._all_rdt_s_d = []
+
+
+    @property
+    def verbosity(self):
+        return self.verb_handler.level
+
+    @verbosity.setter
+    def verbosity(self, value: int):
+        self.verb_handler.level = value
 
     @property
     def mode(self) -> int:
@@ -180,7 +197,7 @@ class PySCRDT:
         """
 
         if mode is None:
-            print("# PySCRDT : Set mode in [set_mode]")
+            self.verb_handler("# PySCRDT : Set mode in [set_mode]")
         else:
             self.mode = mode
 
@@ -445,7 +462,8 @@ class PySCRDT:
         D = self._symbols.D
 
         # TODO: Make new pre-calculator
-        print(f"# PySCRDT : Calculating potential for {self.m, self.n}")
+        self.verb_handler("# PySCRDT : Calculating potential for "
+                          + f"{self.m, self.n}")
         V = ((-1 + sy.exp(-x**2 / (t + 2*a**2) -y**2 / (t + 2*b**2)))
                 / sy.sqrt((t + 2*a**2)*(t + 2*b**2)))
 
